@@ -62,6 +62,7 @@ def create_graph_struct(graph):
 
 
 def draw_graph(im_arr, paths_arr, graph):
+    """Визуализация графов"""
     # рисуем и сохраняем исходный граф
     G = create_graph_struct(graph)
     snapshot_name = "pictures/initial.png"
@@ -69,41 +70,35 @@ def draw_graph(im_arr, paths_arr, graph):
     plt.rcParams["figure.autolayout"] = True
     #for edge in G.edges(data=True): edge[2]['label'] = edge[2]['weight']
     nx.draw(G, with_labels=True, node_size=80, alpha=0.5, linewidths=10)
-
     plt.savefig(snapshot_name, dpi=70, bbox_inches='tight')
     im_arr.append(snapshot_name)
-
     plt.close()
 
+    # рисуем графы наикратчайших гамильтоновых циклов
     for i in range(len(paths_arr)):
         snapshot_name = f"pictures/{i}.png"
         path = f'{str(paths_arr[i][0])}-{str(paths_arr[i][1])}-{str(paths_arr[i][2])}-{str(paths_arr[i][3])}-' \
                f'{str(paths_arr[i][4])}-{str(paths_arr[i][5])}'
-        pos = nx.spring_layout(G, seed=7)
+        #pos = nx.spring_layout(G, seed=7)
+        #e_higlight = []
 
-        data = [[], []]
-        e_higlight = []
-
-        for i in range(len(paths_arr[0])):
-            data[0].append(i)
-            if i == len(paths_arr[0])-1:
-                data[1].append(0)
-            else:
-                data[1].append(i+1)
+        data = []
+        for j in range(len(paths_arr[0])):
+            if j+1 < len(paths_arr[0]):
+                data.append(paths_arr[i][j+1])
+        data.append(paths_arr[i][0])
 
         plt.rcParams["figure.figsize"] = [7.50, 3.50]
         plt.rcParams["figure.autolayout"] = True
         plt.text(-1.5, 1, f'Путь: {path}')
-
-        df = pd.DataFrame({'from': data[0], 'to': data[1]})
+        df = pd.DataFrame({'from': paths_arr[i], 'to': data})
         G = nx.from_pandas_edgelist(df, 'from', 'to', create_using=nx.MultiGraph())
         nx.draw(G, with_labels=True, node_size=80, alpha=0.5, linewidths=10)
-        nx.draw_networkx_edges(G, pos, edgelist=e_higlight, width=6)
+        #nx.draw_networkx_edges(G, pos, edgelist=e_higlight, width=6)
         plt.savefig(snapshot_name, dpi=70, bbox_inches='tight')
         im_arr.append(snapshot_name)
 
         plt.close()
-    plt.close()
 
 
 def closest_neighbor_method(graph):
