@@ -1,9 +1,5 @@
-from tkinter import *
-from tkinter import ttk
-from PIL import Image, ImageTk
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import networkx as nx
 
 
@@ -47,16 +43,6 @@ def add_next_neighbor(path, ind, all_paths, graph): # not ok
 
 def zero_v_vert(path, graph): # not ok
     """Обнуляет вертикальные столбцы в матрице graph по индексам из path"""
-    '''
-    graph = [
-        # [a, b, c, d, f, g] в
-        [0, 3, 0, 0, 1, 0],  # a из
-        [3, 0, 8, 0, 0, 3],  # b
-        [0, 3, 0, 1, 0, 1],  # c
-        [0, 0, 8, 0, 1, 0],  # d
-        [3, 0, 0, 3, 0, 0],  # f
-        [3, 3, 3, 5, 4, 0]  # g
-    ]'''
     leng = len(graph[0])
     for i in range(leng):
         if i in path[1]:
@@ -105,10 +91,6 @@ def draw_graph(im_arr, paths_arr, graph):
             else:
                 data[1].append(i+1)
 
-        #for (u, v, d) in G.edges(data=True):
-            #if data[0][data.index(v)] == u:
-                #e_higlight.append((u, v))
-
         plt.rcParams["figure.figsize"] = [7.50, 3.50]
         plt.rcParams["figure.autolayout"] = True
         plt.text(-1.5, 1, f'Путь: {path}')
@@ -125,17 +107,6 @@ def draw_graph(im_arr, paths_arr, graph):
 
 
 def closest_neighbor_method(graph):
-    '''
-    graph = [
-        # [a, b, c, d, f, g] в
-        [0, 3, 0, 0, 1, 0],  # a из
-        [3, 0, 8, 0, 0, 3],  # b
-        [0, 3, 0, 1, 0, 1],  # c
-        [0, 0, 8, 0, 1, 0],  # d
-        [3, 0, 0, 3, 0, 0],  # f
-        [3, 3, 3, 5, 4, 0]   # g
-    ]'''
-
     # создаем массив со всеми возможными началами путей обхода
     all_paths = create_start_paths(graph)
 
@@ -161,7 +132,7 @@ def closest_neighbor_method(graph):
     for l in mas_del:
         all_paths.remove(l)
 
-    print(best_len)
+    print('all paths')
     for el in all_paths:
         print(el)
         if el[0] == best_len:
@@ -171,10 +142,6 @@ def closest_neighbor_method(graph):
     print('len = ', best_len)
     for el in best_paths:
         print(el)
-
-    data = pd.DataFrame(graph)
-    #data.columns = ['0', '1', '2', '3', '4', '5']
-    #data.index = ['0', '1', '2', '3', '4', '5']
 
     img_arr = []
     draw_graph(img_arr, best_paths, graph)
