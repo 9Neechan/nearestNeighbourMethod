@@ -1,4 +1,3 @@
-import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -24,10 +23,10 @@ def create_start_paths(graph):
     return all_paths
 
 
-def add_next_neighbor(path, ind, all_paths, graph): # not ok
+def add_next_neighbor(path, ind, all_paths, graph):
     """Добавляет все возможные ветки путей"""
     new_g = zero_v_vert(path, graph)
-    min_s, list_min_s = find_smallest_el_in_row(new_g[path[1][ind-1]])
+    min_s, list_min_s = find_smallest_el_in_row(new_g[path[1][ind - 1]])
 
     save_path = path[1][:]
     if len(list_min_s) != 0:
@@ -41,7 +40,7 @@ def add_next_neighbor(path, ind, all_paths, graph): # not ok
                 all_paths.append([path[0], a])
 
 
-def zero_v_vert(path, graph): # not ok
+def zero_v_vert(path, graph):
     """Обнуляет вертикальные столбцы в матрице graph по индексам из path"""
     leng = len(graph[0])
     for i in range(leng):
@@ -51,9 +50,8 @@ def zero_v_vert(path, graph): # not ok
     return graph
 
 
-def create_graph_struct(graph):
+def create_multigraph_struct(graph):
     G = nx.MultiDiGraph()
-    elist = []
     for i in range(len(graph)):
         for j in range(len(graph[0])):
             if graph[i][j] != 0 and i != j:
@@ -61,44 +59,67 @@ def create_graph_struct(graph):
     return G
 
 
-def draw_graph(im_arr, paths_arr, graph):
-    """Визуализация графов"""
-    # рисуем и сохраняем исходный граф
-    G = create_graph_struct(graph)
-    snapshot_name = "pictures/initial.png"
-    plt.rcParams["figure.figsize"] = [7.50, 3.50]
-    plt.rcParams["figure.autolayout"] = True
-    #for edge in G.edges(data=True): edge[2]['label'] = edge[2]['weight']
-    nx.draw(G, with_labels=True, node_size=80, alpha=0.5, linewidths=10)
-    plt.savefig(snapshot_name, dpi=70, bbox_inches='tight')
-    im_arr.append(snapshot_name)
+def create_graph_struct(path_arr, graph):
+    G = nx.DiGraph()
+    data = []
+    for j in range(len(path_arr)):
+        if j + 1 < len(path_arr):
+            data.append(path_arr[j + 1])
+    data.append(path_arr[0])
+    for i in range(len(path_arr)):
+        G.add_edge(f'{path_arr[i]}', f'{data[i]}', weight=graph[path_arr[i]][data[i]])
+    return G
+
+
+def make_plt(flag, path_arr, graph, i):
+    pos = {'0': [0, 0.25],
+           '1': [-0.55, 0.25],
+           '2': [-0.55, -0.4],
+           '3': [0.2, -0.5],
+           '4': [0.45, 0],
+           '5': [-0.15, -0.0775903]}
+    path = ''
+
+    if flag == 'multi':
+        G = create_multigraph_struct(graph)
+        snapshot_name = "pictures/initial.png"
+    else:
+        G = create_graph_struct(path_arr, graph)
+        snapshot_name = f"pictures/{i}.png"
+        path = f'{str(path_arr[0])}-{str(path_arr[1])}-' \
+               f'{str(path_arr[2])}-{str(path_arr[3])}-' \
+               f'{str(path_arr[4])}-{str(path_arr[5])}'
+
+    # nodes
+    nx.draw_networkx_nodes(G, pos, node_size=700, node_color='green', alpha=0.6)
+    # edges
+    nx.draw_networkx_edges(G, pos, width=2)
+    # node labels
+    nx.draw_networkx_labels(G, pos, font_size=20, font_family="sans-serif")
+    if flag == "basic":
+        # edge weight labels
+        edge_labels = nx.get_edge_attributes(G, "weight")
+        nx.draw_networkx_edge_labels(G, pos, edge_labels)
+        plt.title(f'Путь: {path}')
+    ax = plt.gca()
+    ax.margins(0.08)
+    plt.axis("off")
+    plt.tight_layout()
+
+    plt.savefig(snapshot_name, dpi=50, bbox_inches='tight')
     plt.close()
+
+
+def draw_graph(paths_arr, graph):
+    """Визуализация графов"""
+
+    flag = 'multi'
+    make_plt(flag, paths_arr[0], graph, 0)
 
     # рисуем графы наикратчайших гамильтоновых циклов
     for i in range(len(paths_arr)):
-        snapshot_name = f"pictures/{i}.png"
-        path = f'{str(paths_arr[i][0])}-{str(paths_arr[i][1])}-{str(paths_arr[i][2])}-{str(paths_arr[i][3])}-' \
-               f'{str(paths_arr[i][4])}-{str(paths_arr[i][5])}'
-        #pos = nx.spring_layout(G, seed=7)
-        #e_higlight = []
-
-        data = []
-        for j in range(len(paths_arr[0])):
-            if j+1 < len(paths_arr[0]):
-                data.append(paths_arr[i][j+1])
-        data.append(paths_arr[i][0])
-
-        plt.rcParams["figure.figsize"] = [7.50, 3.50]
-        plt.rcParams["figure.autolayout"] = True
-        plt.text(-1.5, 1, f'Путь: {path}')
-        df = pd.DataFrame({'from': paths_arr[i], 'to': data})
-        G = nx.from_pandas_edgelist(df, 'from', 'to', create_using=nx.MultiGraph())
-        nx.draw(G, with_labels=True, node_size=80, alpha=0.5, linewidths=10)
-        #nx.draw_networkx_edges(G, pos, edgelist=e_higlight, width=6)
-        plt.savefig(snapshot_name, dpi=70, bbox_inches='tight')
-        im_arr.append(snapshot_name)
-
-        plt.close()
+        flag = 'basic'
+        make_plt(flag, paths_arr[i], graph, i)
 
 
 def closest_neighbor_method(graph):
@@ -116,9 +137,10 @@ def closest_neighbor_method(graph):
     best_len = 1000
     mas_del = []
     for i in range(len(all_paths)):
-        if len(all_paths[i][1]) == len(graph) and graph[all_paths[i][1][len(graph)-1]][all_paths[i][1][0]] != 0:
+        if len(all_paths[i][1]) == len(graph) and \
+                graph[all_paths[i][1][len(graph) - 1]][all_paths[i][1][0]] != 0:
             print(i)
-            all_paths[i][0] += graph[all_paths[i][1][len(graph)-1]][all_paths[i][1][0]]
+            all_paths[i][0] += graph[all_paths[i][1][len(graph) - 1]][all_paths[i][1][0]]
             if all_paths[i][0] < best_len:
                 best_len = all_paths[i][0]
         else:
@@ -138,10 +160,8 @@ def closest_neighbor_method(graph):
     for el in best_paths:
         print(el)
 
-    img_arr = []
-    draw_graph(img_arr, best_paths, graph)
+    draw_graph(best_paths, graph)
 
     return best_len, best_paths
 
-
-#closest_neighbor_method()
+# closest_neighbor_method()
